@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+.clickable-cell {
+  cursor: pointer;
+}
+
+.main-layout {
+  width: 100%;
+  display: flex;
+  padding-top: 2rem;
+}
+
+.main-layout .left-section {
+  width: 60%;
+  padding-left: 10%;
+}
+
+.main-layout .right-section {
+  width: 30%;
+}
+
+.custom-input-container {
+  display: inline-block;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.custom-input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgb(229, 231, 235);
+  outline: none;
+  padding: 2px 0;
+  font-size: 1rem;
+  background-color: transparent;
+  transition: border-color 0.3s;
+}
+
+.custom-input:focus {
+  border-bottom-color: #a7a4a486;
+}
