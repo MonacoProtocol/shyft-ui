@@ -87,7 +87,7 @@ function HomePage() {
       </div>
       <div className="right-section">
         <div className="pl-10 font-bold text-blue-500 pointer-cursor">
-          <a href="/wallet">View Positions</a>
+          <a href="/wallet">View Your Positions</a>
         </div>
       </div>
     </div>
