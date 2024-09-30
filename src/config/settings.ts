@@ -15,8 +15,8 @@ export interface AppSettings {
   debug: boolean;
 }
 
-const shyftApiKey = '';
-const rpcNode = '';
+const shyftApiKey = process.env.NEXT_PUBLIC_SHYFT_API_KEY;
+const rpcNode = `https://rpc.shyft.to?api_key=${shyftApiKey}`;
 
 export const DefaultAppSettings: AppSettings = {
   rpcNode,
@@ -28,6 +28,6 @@ export const DefaultAppSettings: AppSettings = {
   mintPk: new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
   mintDecimals: 6,
   priceLadderAccount: new PublicKey('GGBay2i5Kut37XVNfVLSDuoCyyAELLtNHqMxU2YhRRUK'),
-  messagePersistSeconds: 4,
+  messagePersistSeconds: 8,
   debug: true,
 };

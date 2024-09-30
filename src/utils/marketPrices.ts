@@ -1,46 +1,52 @@
-import { GQLOutcome, GQLPrice } from '@/types/markets';
+import { ConvertedLiquidity, GQLOutcome, GQLPrice } from '@/types/markets';
 
 export interface GQLOutcomeWithPrice extends GQLOutcome {
-  forPrices: GQLPrice[];
-  againstPrices: GQLPrice[];
+  forPrices: ConvertedLiquidity[];
+  againstPrices: ConvertedLiquidity[];
 }
 
 const emptyPrice = {
-  forOutcome: true,
-  liquidityAmount: 0,
-  market: '',
-  marketOutcomeIndex: 0,
-  matchedAmount: 0,
   price: 0,
-  pubkey: '',
+  outcome: 0,
+  liquidity: 0,
 };
 
 export const mapPricesToOutcomesAndFillEmptySlots = (
-  prices: GQLPrice[],
+  price: GQLPrice,
   outcomes: GQLOutcome[],
 ): GQLOutcomeWithPrice[] => {
-  const forPrices = prices.filter((price) => price.forOutcome === true);
-  const againstPrices = prices.filter((price) => price.forOutcome === false);
+  const forPrices = price.liquiditiesFor;
+  const againstPrices = price.liquiditiesAgainst;
 
   return outcomes.map((outcome) => {
     const forPricesFiltered = forPrices
-      .filter((price) => price.marketOutcomeIndex === outcome.index)
-      .sort((a, b) => (b.price < a.price ? 1 : -1));
+      .filter((price) => price.outcome === outcome.index)
+
+    const forPricesConverted = forPricesFiltered.map((price) => ({
+      price: parseFloat(price.price),
+      outcome: price.outcome,
+      liquidity: parseFloat(price.liquidity),
+    })).sort((a, b) => (b.price < a.price ? 1 : -1));
 
     const againstPricesFiltered = againstPrices
-      .filter((price) => price.marketOutcomeIndex === outcome.index)
-      .sort((a, b) => (b.price < a.price ? 1 : -1));
+      .filter((price) => price.outcome === outcome.index)
 
-    while (forPricesFiltered.length < 3) {
-      forPricesFiltered.push(emptyPrice);
+    const againstPricesConverted = againstPricesFiltered.map((price) => ({
+      price: parseFloat(price.price),
+      outcome: price.outcome,
+      liquidity: parseFloat(price.liquidity),
+    })).sort((a, b) => (b.price < a.price ? 1 : -1));
+
+    while (forPricesConverted.length < 3) {
+      forPricesConverted.push(emptyPrice);
     }
-    while (againstPricesFiltered.length < 3) {
-      againstPricesFiltered.unshift(emptyPrice);
+    while (againstPricesConverted.length < 3) {
+      againstPricesConverted.unshift(emptyPrice);
     }
     return {
       ...outcome,
-      forPrices: [...forPricesFiltered],
-      againstPrices: [...againstPricesFiltered],
+      forPrices: [...forPricesConverted],
+      againstPrices: [...againstPricesConverted],
     };
   });
 };

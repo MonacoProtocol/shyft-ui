@@ -25,11 +25,12 @@ import { useBetSlipProvider } from '@/context/BetSlipProvider';
 import { useEvents } from '@/context/EventProvider';
 import { GET_MARKET_PRICES_FOR_MARKETS } from '@/queries/getMarketPricesForMarkets';
 import { GET_WALLET_ORDERS_FOR_MARKETS } from '@/queries/getWalletOrdersForMarkets';
-import { GQLMarket, GQLMarketInfo, GQLOutcome, GQLPrice, MappedMarketData } from '@/types/markets';
+import { ConvertedLiquidity, DefaultGQLPrice, GQLMarket, GQLMarketInfo, GQLOutcome, GQLPrice, Liquidity, MappedMarketData } from '@/types/markets';
 import { GQLOrderInfo } from '@/types/orders';
 import { convertTimestampToDateString, nowTimestamp } from '@/utils/dateTime';
 import { mapPricesToOutcomesAndFillEmptySlots } from '@/utils/marketPrices';
 import { integerToUiValue } from '@/utils/numbers';
+import { addUpLiquidity } from '@/utils/liquidity';
 
 const EventPage = () => {
   const router = useRouter();
@@ -71,7 +72,7 @@ const EventPage = () => {
     data: GQLMarketInfo,
   ): MappedMarketData => {
     const mappedData: {
-      [key: string]: { market: GQLMarket; outcomes: GQLOutcome[]; prices: GQLPrice[] };
+      [key: string]: { market: GQLMarket; outcomes: GQLOutcome[]; prices: GQLPrice };
     } = {};
 
     marketPks.forEach((marketPk) => {
@@ -79,7 +80,7 @@ const EventPage = () => {
       const outcomes = data.outcomes
         .filter((o) => o.market === marketPk)
         .sort((a, b) => a.index - b.index);
-      const prices = data.prices.filter((p) => p.market === marketPk);
+      const prices = data.prices.find((p) => p.market === marketPk) ?? DefaultGQLPrice(marketPk);
 
       if (market) {
         mappedData[marketPk] = {
@@ -90,12 +91,12 @@ const EventPage = () => {
       }
     });
 
-    return mappedData;
+    return mappedData
   };
 
-  const handleCellClick = (market: GQLMarket, outcome: GQLOutcome, price: GQLPrice) => {
+  const handleCellClick = (market: GQLMarket, outcome: GQLOutcome, price: ConvertedLiquidity, forOutcome: boolean) => {
     if (event) {
-      betSlipProvider.setBetSlipFromMatrix(event, market, outcome, price);
+      betSlipProvider.setBetSlipFromMatrix(event, market, outcome, price, forOutcome);
     }
   };
 
@@ -161,14 +162,8 @@ const EventPage = () => {
                     allPrices,
                     mappedMarketData[key].outcomes,
                   );
-                  const liquidity = allPrices.reduce(
-                    (acc, price) => acc + price.liquidityAmount,
-                    0,
-                  );
-                  const matchedTotal = outcomes.reduce(
-                    (acc, outcome) => acc + outcome.matchedTotal,
-                    0,
-                  );
+                  const liquidity = addUpLiquidity(allPrices);
+                  const matchedTotal = mappedMarketData[key].prices.stakeMatchedTotal;
                   const marketLocked = market.marketLockTimestamp < nowTimestamp();
                   const positions = ordersData?.positions.find(
                     (marketPosition) => marketPosition.market === market.pubkey,
@@ -243,39 +238,39 @@ const EventPage = () => {
                                 <TableCell>{outcome.title}</TableCell>
                                 <TableCell
                                   className="text-center clickable-cell w-15"
-                                  onClick={() => handleCellClick(market, outcome, againstPrice1)}
+                                  onClick={() => handleCellClick(market, outcome, againstPrice1, true)}
                                 >
-                                  <PriceCellComponent price={againstPrice1} />
+                                  <PriceCellComponent price={againstPrice1} forOutcome={false} />
                                 </TableCell>
                                 <TableCell
                                   className="text-center clickable-cell w-15"
-                                  onClick={() => handleCellClick(market, outcome, againstPrice2)}
+                                  onClick={() => handleCellClick(market, outcome, againstPrice2, true)}
                                 >
-                                  <PriceCellComponent price={againstPrice2} />
+                                  <PriceCellComponent price={againstPrice2} forOutcome={false} />
                                 </TableCell>
                                 <TableCell
                                   className="text-center clickable-cell w-15"
-                                  onClick={() => handleCellClick(market, outcome, againstPrice3)}
+                                  onClick={() => handleCellClick(market, outcome, againstPrice3, true)}
                                 >
-                                  <PriceCellComponent price={againstPrice3} />
+                                  <PriceCellComponent price={againstPrice3} forOutcome={false} />
                                 </TableCell>
                                 <TableCell
                                   className="text-center clickable-cell w-15"
-                                  onClick={() => handleCellClick(market, outcome, forPrice1)}
+                                  onClick={() => handleCellClick(market, outcome, forPrice1, false)}
                                 >
-                                  <PriceCellComponent price={forPrice1} />
+                                  <PriceCellComponent price={forPrice1} forOutcome={true} />
                                 </TableCell>
                                 <TableCell
                                   className="text-center clickable-cell w-15"
-                                  onClick={() => handleCellClick(market, outcome, forPrice2)}
+                                  onClick={() => handleCellClick(market, outcome, forPrice2, false)}
                                 >
-                                  <PriceCellComponent price={forPrice2} />
+                                  <PriceCellComponent price={forPrice2} forOutcome={true} />
                                 </TableCell>
                                 <TableCell
                                   className="text-center clickable-cell w-15"
-                                  onClick={() => handleCellClick(market, outcome, forPrice3)}
+                                  onClick={() => handleCellClick(market, outcome, forPrice3, false)}
                                 >
-                                  <PriceCellComponent price={forPrice3} />
+                                  <PriceCellComponent price={forPrice3} forOutcome={true} />
                                 </TableCell>
                                 <TableCell>
                                   {!loadingOrdersData

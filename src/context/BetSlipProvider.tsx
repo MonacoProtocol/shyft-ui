@@ -1,7 +1,7 @@
 import { FC, createContext, useContext, useState } from 'react';
 
 import { MonacoProtocolEvent } from '@/types/events';
-import { GQLMarket, GQLOutcome, GQLPrice } from '@/types/markets';
+import { ConvertedLiquidity, GQLMarket, GQLOutcome, GQLPrice } from '@/types/markets';
 
 export interface BetSlip {
   eventName: string;
@@ -37,7 +37,8 @@ interface BetSlipContextProps {
     event: MonacoProtocolEvent,
     market: GQLMarket,
     outcome: GQLOutcome,
-    price: GQLPrice,
+    price: ConvertedLiquidity,
+    forOutcome: boolean,
   ) => void;
   updateBetSlip: (newValues: Partial<BetSlip>) => void;
 }
@@ -55,12 +56,13 @@ export const BetSlipProvider: FC<BetSlipProviderProps> = ({ children }) => {
     event: MonacoProtocolEvent,
     market: GQLMarket,
     outcome: GQLOutcome,
-    price: GQLPrice,
+    price: ConvertedLiquidity,
+    forOutcome: boolean,
   ) => {
-    const risk = price.forOutcome
+    const risk = forOutcome
       ? betSlip.stake
       : parseFloat((betSlip.stake * price.price).toFixed(2));
-    const potentialPayout = price.forOutcome
+    const potentialPayout = forOutcome
       ? parseFloat((betSlip.stake * price.price - betSlip.stake).toFixed(2))
       : betSlip.stake;
     const newBetSlip: BetSlip = {
@@ -71,7 +73,7 @@ export const BetSlipProvider: FC<BetSlipProviderProps> = ({ children }) => {
       outcomeTitle: outcome.title,
       outcomeAccount: outcome.pubkey,
       outcomeIndex: outcome.index,
-      forOutcome: price.forOutcome,
+      forOutcome: forOutcome,
       price: price.price,
       risk: isNaN(risk) ? 0 : risk,
       potentialPayout: isNaN(potentialPayout) ? 0 : potentialPayout,
